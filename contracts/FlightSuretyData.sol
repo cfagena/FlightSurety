@@ -59,8 +59,9 @@ contract FlightSuretyData {
     * @dev Constructor
     *      The deploying account becomes contractOwner
     */
-    constructor() {
+    constructor(address firstAirline) {
         contractOwner = msg.sender;
+        registerFirstAirline(firstAirline);
     }
 
     /********************************************************************************************/
@@ -187,9 +188,8 @@ contract FlightSuretyData {
     * @dev Add first airline
     *
     */  
-    function registerFirstAirline(address firstAirline) external
+    function registerFirstAirline(address firstAirline) internal
     requireIsOperational 
-    isCallerAuthorized
     returns(bool success) {
         require(amountRegisteredAirlines == 0, "First Airline already exists");
 

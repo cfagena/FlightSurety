@@ -90,14 +90,10 @@ contract FlightSuretyApp {
     * @dev Contract constructor
     *
     */
-    constructor (address firstAirline, address dataContractAddress) {
+    constructor (address dataContractAddress) {
         contractOwner = msg.sender;
         operationalFlag = true;
         dataContract = FlightSuretyData(dataContractAddress);
-
-        if (dataContract.registerFirstAirline(firstAirline)) {
-            emit AirlineRegistered(firstAirline);
-        }
     }
 
     /********************************************************************************************/
