@@ -19,7 +19,66 @@
         </button>
     </nav>
 
-    <main class="container">
+    <main class="container w-100">
+        <div>
+            <h3>Airlines</h3>
+            <table class="table">
+              <tr>
+                <th>Airline</th>
+                <th>Status</th>
+                <th>Action</th>
+              </tr>
+              <tr>
+                <td>First Airline</td>
+                <td id="airline-2-status">Participant</td>
+                <td>
+                    <btn class="btn btn-primary" id="register-airline-1">Register</btn>
+                    <btn class="btn btn-primary" id="submit-fund-1">Fund</btn>
+                </td>
+              </tr>
+              <tr>
+                <td>LATAM</td>
+                <td id="airline-2-status">Unknown</td>
+                <td>
+                  <btn class="btn btn-primary" id="register-airline-2">Register (from: First Airline)</btn>
+                  <btn class="btn btn-primary" id="submit-fund-2">Fund</btn>
+                </td>
+              </tr>
+            </table>
+          </div>
+
+
+
+
+        <div>
+            <h3>Register Flight</h3>
+            <table class="table">
+              <tr>
+                <th>Airline</th>
+                <th>Flight Code</th>
+                <th>Departure</th>
+                <th>Register</th>
+              </tr>
+              <tr>
+                <td>First Airline</td>
+                <td>FA1111</td>
+                <td>23:30 PM</td>
+                <td>
+                    <btn class="btn btn-primary" id="register-flight-1">Register</btn>
+                    <btn class="btn btn-primary" id="submit-oracle-1">Submit to Oracles</btn>
+                </td>
+              </tr>
+              <tr>
+                <td>LATAM</td>
+                <td>LT0001</td>
+                <td>23:59 PM</td>
+                <td>
+                  <btn class="btn btn-primary" id="register-flight-2">Register</btn>
+                  <btn class="btn btn-primary" id="submit-oracle-2">Submit to Oracles</btn>
+                </td>
+              </tr>
+            </table>
+          </div>
 
         <div id="display-wrapper" class="top-20">
         </div>

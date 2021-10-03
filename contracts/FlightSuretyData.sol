@@ -1,9 +1,14 @@
+// SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.6;
 
 import "../node_modules/openzeppelin-solidity/contracts/math/SafeMath.sol";
 
 contract FlightSuretyData {
     using SafeMath for uint256;
+
+    event Log(string);
+
+    event AirlineParticipant(address account);
 
     /********************************************************************************************/
     /*                                       DATA VARIABLES                                     */
@@ -132,50 +137,61 @@ contract FlightSuretyData {
         delete authorizedContracts[contractAddress];
     }
 
-    function hasAirlineRecord(address airline) external
+    function isContractAuthorized(address contractAddress) external 
+    returns(bool success){
+        if (authorizedContracts[contractAddress] == 1) {
+            emit Log("Contract authorized");
+            return true;
+        } else {
+            emit Log("Contract NOT authorized");
+            return false;
+        }
+    }
+
+    function hasAirlineRecord(address airline) external view
     isCallerAuthorized
     returns(bool success){
         return airlines[airline].accountAddress != address(0);
     }
 
-    function isRegisteredAirline(address airline) external
+    function isRegisteredAirline(address airline) external view
     isCallerAuthorized 
     returns(bool success){
         return airlines[airline].isRegistered;
     }
 
-    function isParticipantAirline(address airline) external
+    function isParticipantAirline(address airline) external view
     isCallerAuthorized 
     returns(bool success){
         return airlines[airline].isParticipant;
     }
 
-    function isInsurancePurchased(bytes32 key) external
+    function isInsurancePurchased(bytes32 key) external view
     isCallerAuthorized 
     returns(bool success){
         return insurances[key].exist;
     }
 
-    function getAmountRegisteredAirlines() external
+    function getAmountRegisteredAirlines() external view
     isCallerAuthorized 
     returns(uint256 amount){
         return amountRegisteredAirlines;
     }
 
     
-    function getCandidateNumVotes(address candidateAirline) external
+    function getCandidateNumVotes(address candidateAirline) external view
     isCallerAuthorized 
     returns(uint256 amount){
         return airlines[candidateAirline].amountVotes;
     }
 
-    function callerVotedToAirline(address caller, address candidateAirline) external
+    function callerVotedToAirline(address caller, address candidateAirline) external view
     isCallerAuthorized 
     returns(bool success){
         return airlines[candidateAirline].votes[caller];
     }
 
-    function isFlightRegistered(string memory flightCode) external
+    function isFlightRegistered(string memory flightCode) external view
     isCallerAuthorized 
     returns(bool success){
         return flights[flightCode].isRegistered;
@@ -200,6 +216,8 @@ contract FlightSuretyData {
         fAirline.isParticipant = true;
 
         amountRegisteredAirlines++;
+
+        emit AirlineParticipant(firstAirline);
 
         return true;
     }
@@ -268,13 +286,21 @@ contract FlightSuretyData {
     */ 
     function registerFlight(string memory flightCode, address airlineAddress) external
     requireIsOperational 
-    isCallerAuthorized {
-        flights[flightCode] = Flight ({
-            isRegistered: true,
-            statusCode: STATUS_CODE_UNKNOWN,
-            updatedTimestamp: block.timestamp,    
-            airline: airlineAddress
-        });
+    isCallerAuthorized 
+    returns(bool success) {
+        if (flights[flightCode].isRegistered == false) {
+            flights[flightCode] = Flight ({
+                        isRegistered: true,
+                        statusCode: STATUS_CODE_UNKNOWN,
+                        updatedTimestamp: block.timestamp,    
+                        airline: airlineAddress
+                    });
+
+            emit Log(flightCode);
+
+            return true;
+        }
+        return false;       
     }
 
    /**

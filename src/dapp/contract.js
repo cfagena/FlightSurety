@@ -1,4 +1,5 @@
 import FlightSuretyApp from '../../build/contracts/FlightSuretyApp.json';
+import FlightSuretyData from '../../build/contracts/FlightSuretyData.json';
 import Config from './config.json';
 import Web3 from 'web3';
 
@@ -7,30 +8,45 @@ export default class Contract {
 
         let config = Config[network];
         this.web3 = new Web3(new Web3.providers.HttpProvider(config.url));
+
         this.flightSuretyApp = new this.web3.eth.Contract(FlightSuretyApp.abi, config.appAddress);
+        this.flightSuretyData = new this.web3.eth.Contract(FlightSuretyData.abi, config.dataAddress);
+
         this.initialize(callback);
         this.owner = null;
         this.airlines = [];
         this.passengers = [];
     }
 
-    initialize(callback) {
-        this.web3.eth.getAccounts((error, accts) => {
+    async initialize(callback) {
+        await this.web3.eth.getAccounts((error, accts) => {
            
             this.owner = accts[0];
 
             let counter = 1;
             
-            while(this.airlines.length < 5) {
-                this.airlines.push(accts[counter++]);
-            }
+            this.airlines.push(accts[1]);
 
-            while(this.passengers.length < 5) {
-                this.passengers.push(accts[counter++]);
-            }
+            // while(this.airlines.length < 5) {
+            //     this.airlines.push(accts[counter++]);
+            // }
+
+            // while(this.passengers.length < 5) {
+            //     this.passengers.push(accts[counter++]);
+            // }
 
             callback();
         });
+
+        await this.flightSuretyApp.events.allEvents({ fromBlock: 'latest' })
+            .on('data', console.log)
+            .on('changed', console.log)
+            .on('error', console.log);
+
+        await this.flightSuretyData.events.allEvents({ fromBlock: 'latest' })
+            .on('data', console.log)
+            .on('changed', console.log)
+            .on('error', console.log);        
     }
 
     isOperational(callback) {
@@ -53,4 +69,16 @@ export default class Contract {
                 callback(error, payload);
             });
     }
+
+    registerFlight(flightCode, airline, callback) {
+        let self = this;
+        self.flightSuretyApp.methods
+            .registerFlight(flightCode)
+            .send({ from: airline, "gas": 4712388, "gasPrice": 100000000000 }, 
+                (error, result) => {
+                    callback(error);
+                });
+    }
+
+    
 }
