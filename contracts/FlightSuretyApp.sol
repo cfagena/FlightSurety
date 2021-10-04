@@ -38,6 +38,8 @@ contract FlightSuretyApp {
     event AirlineVoted(address airline);
     event FlightRegistered(string flightCode);
 
+    event OracleRegistered(address account);
+
     event Log(string);
  
     /********************************************************************************************/
@@ -174,7 +176,7 @@ contract FlightSuretyApp {
         }
     }
 
-    function fund () public payable 
+    function fund() public payable 
     requireIsOperational
     requireRegisteredAirline {
 
@@ -183,6 +185,16 @@ contract FlightSuretyApp {
 
         dataContract.updateAirlineStatus(msg.sender, true, true);
         emit AirlineParticipant(msg.sender);        
+    }
+
+    function getAirlineStatus(address airline) public payable 
+    requireIsOperational 
+    returns(string memory status) {
+
+        require(airline != address(0), "airline is not a valid address.");
+        require(dataContract.isRegisteredAirline(airline), "Airline is not registered");
+
+        return dataContract.getAirlineStatus(airline);
     }
 
    /**
@@ -206,16 +218,16 @@ contract FlightSuretyApp {
     * @dev Buy insurance for a flight
     *
     */   
-    function buy (address passenger, uint256 amount, string memory flightCode) external payable 
+    function buy(string memory flightCode) external payable 
     requireIsOperational
-    {
-        require((amount > 0) && (amount <= 1), "Insurance value should be into the interval ]0,1]");
+    returns(bool success) {
+        require((msg.value > 0) && (msg.value <= 1 ether), "Insurance value should be into the interval ]0,1]");
         
-        bytes32 key = keccak256(abi.encodePacked(passenger, flightCode));
+        bytes32 key = keccak256(abi.encodePacked(msg.sender, flightCode));
 
         require(!dataContract.isInsurancePurchased(key), "Insurance already purchased for this flight and passenger");
 
-        dataContract.buy(key, amount);
+        return dataContract.buy(key, msg.value);
     } 
 
    /**
@@ -306,6 +318,8 @@ contract FlightSuretyApp {
                                         isRegistered: true,
                                         indexes: indexes
                                     });
+
+        emit OracleRegistered(msg.sender);
     }
 
     function getMyIndexes () view external

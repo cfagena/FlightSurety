@@ -196,6 +196,20 @@ contract FlightSuretyData {
     returns(bool success){
         return flights[flightCode].isRegistered;
     }
+
+    function getAirlineStatus(address airline) public payable 
+    requireIsOperational 
+    returns(string memory status) {
+
+        if (airlines[airline].isParticipant) {
+            return "Participant";
+        } else if (airlines[airline].isRegistered) {
+            return "Registered";
+        }
+        
+        return "Unknown";
+    }
+    
     /********************************************************************************************/
     /*                                     SMART CONTRACT FUNCTIONS                             */
     /********************************************************************************************/
@@ -309,13 +323,15 @@ contract FlightSuretyData {
     */   
     function buy (bytes32 key, uint256 amount) external payable
     requireIsOperational 
-    isCallerAuthorized {
+    isCallerAuthorized 
+    returns(bool success) {
         insurances[key] =  Insurance ({
             amount: amount,
             flightStatus: STATUS_CODE_UNKNOWN,
             credited: false,
             exist: true
         });
+        return true;
     } 
     
     /**

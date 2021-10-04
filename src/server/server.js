@@ -5,7 +5,6 @@ import Web3 from 'web3';
 import express from 'express';
 import "babel-polyfill";
 
-
 let config = Config['localhost'];
 let web3 = new Web3(new Web3.providers.WebsocketProvider(config.url.replace('http', 'ws')));
 web3.eth.defaultAccount = web3.eth.accounts[0];
@@ -21,16 +20,14 @@ flightSuretyApp.events.OracleRequest({
 
 async function registerOracles() {
   const accounts = await web3.eth.getAccounts();
-  console.log(`accounts: ${accounts}`);
+  const fee = await flightSuretyApp.methods.REGISTRATION_FEE().call();
 
-  await flightSuretyData.methods.authorizeContract(config.appAddress).send({ from: accounts[0], gas: config.gas })
-
-  let result = await flightSuretyData.methods.isContractAuthorized(config.appAddress).call({ from: accounts[0] });
-
-  console.log(`result: ${result}`);
-
+  for (let i = 10; i < 30; i++) {
+    console.log(i);
+    await flightSuretyApp.methods.registerOracle().send({value: fee, from: accounts[i], gas: 3000000});
+  }
 }
-
+    
 registerOracles();
 
 flightSuretyApp.events.allEvents({fromBlock: 'latest'}, 
