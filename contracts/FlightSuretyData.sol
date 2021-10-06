@@ -27,8 +27,7 @@ contract FlightSuretyData {
 
     struct Insurance {
         uint256 amount;
-        uint8 flightStatus;
-        bool credited;
+        bool settled;
         bool exist;
     }
 
@@ -45,13 +44,15 @@ contract FlightSuretyData {
         uint8 statusCode;
         uint256 updatedTimestamp;        
         address airline;
+        
+        mapping(address => Insurance) insurances;   // mapping passenger => Insurance
+        address[] insurees;                         // array of insurees
     }
 
     uint256 private amountRegisteredAirlines = 0;
 
     mapping(string => Flight) private flights;
     mapping(address => Airline) airlines; 
-    mapping(bytes32 => Insurance) private insurances;               // mapping passenger/flight key => Insurance
     mapping(address => uint256) private passengerBalance;
     
 

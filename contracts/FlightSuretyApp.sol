@@ -241,6 +241,8 @@ contract FlightSuretyApp {
                                     uint8 statusCode
                                 ) internal pure {
 
+                                    
+
     }
 
 
@@ -255,9 +257,9 @@ contract FlightSuretyApp {
         // Generate a unique key for storing the request
         bytes32 key = keccak256(abi.encodePacked(index, airline, flight, timestamp));
         
-        ResponseInfo storage auxResponseInfo = oracleResponses[key];
-        auxResponseInfo.requester = msg.sender;
-        auxResponseInfo.isOpen = true;
+        // ResponseInfo storage auxResponseInfo = oracleResponses[key];
+        // auxResponseInfo.requester = msg.sender;
+        // auxResponseInfo.isOpen = true;
 
         emit OracleRequest(index, airline, flight, timestamp);
     } 
@@ -308,9 +310,10 @@ contract FlightSuretyApp {
 
 
     // Register an oracle with the contract
-    function registerOracle () external payable {
+    function registerOracle() external payable {
         // Require registration fee
         require(msg.value >= REGISTRATION_FEE, "Registration fee is required");
+        require(!oracles[msg.sender].isRegistered, "Oracle already registered");
 
         uint8[3] memory indexes = generateIndexes(msg.sender);
 
@@ -333,7 +336,9 @@ contract FlightSuretyApp {
     // and matches one of the three Indexes randomly assigned to the oracle at the
     // time of registration (i.e. uninvited oracles are not welcome)
     function submitOracleResponse (uint8 index, address airline, string memory flight, uint256 timestamp, uint8 statusCode) external {
-        require((oracles[msg.sender].indexes[0] == index) || (oracles[msg.sender].indexes[1] == index) || (oracles[msg.sender].indexes[2] == index), "Index does not match oracle request");
+        require((oracles[msg.sender].indexes[0] == index) 
+            || (oracles[msg.sender].indexes[1] == index) 
+            || (oracles[msg.sender].indexes[2] == index), "Index does not match oracle request");
 
 
         bytes32 key = keccak256(abi.encodePacked(index, airline, flight, timestamp)); 

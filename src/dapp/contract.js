@@ -40,11 +40,11 @@ export default class Contract {
 
         let result = await self.flightSuretyData.methods
                     .isContractAuthorized(self.flightSuretyAppAddress)
-                    .send({ from: self.owner });
+                    .call({ from: self.owner });
         
         console.log(`AppContract authorized: ${result}`);
 
-        if (result) {
+        if (!result) {
             self.flightSuretyData.methods
                 .authorizeContract(self.flightSuretyAppAddress)
                 .send({ from: self.owner, "gas": 4712388 });
@@ -73,16 +73,17 @@ export default class Contract {
             });
     }
 
-    fetchFlightStatus(flight, callback) {
+    fetchFlightStatus(flight, airline, passenger, callback) {
         let self = this;
         let payload = {
-            airline: self.airlines[0],
+            airline: airline,
             flight: flight,
+            passenger: passenger,
             timestamp: Math.floor(Date.now() / 1000)
         } 
         self.flightSuretyApp.methods
             .fetchFlightStatus(payload.airline, payload.flight, payload.timestamp)
-            .send({ from: self.owner}, (error, result) => {
+            .send({ from: passenger}, (error, result) => {
                 callback(error, payload);
             });
     }

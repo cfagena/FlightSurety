@@ -5,9 +5,6 @@ import './flightsurety.css';
 
 
 (async() => {
-
-    let result = null;
-
     let contract = new Contract('localhost', () => {
 
         DOM.elid('passenger-id').textContent = contract.passenger;
@@ -136,6 +133,13 @@ import './flightsurety.css';
             });
         }) 
 
+        DOM.elid('submit-to-oracles').addEventListener('click', () => {
+            let flightCode = DOM.elid('flight-select').value;
+            contract.fetchFlightStatus(flightCode, contract.airlines[1], contract.passenger, (error, response) => {
+                console.log(response);
+            });
+        }) 
+ 
         isOperational();
         
     });
