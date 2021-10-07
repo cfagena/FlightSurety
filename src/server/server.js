@@ -25,39 +25,32 @@ let oracles = [];
 let accounts = [];
 let owner = null;
 
-function registerOracles() {
-  flightSuretyApp.methods
-    .REGISTRATION_FEE().call((error, result) => {
-      oracles.forEach( oracle => {
-        flightSuretyApp.methods
-                .registerOracle()
-                .send({value: result, from: oracle.address, gas: 3000000}, (error, result) => {
-                  if (error) {
-                    console.log(error);
-                  } else {
-                    console.log(result);
-                  }
-                });
-      }); 
-    });
-}
+const registerOracles = async () => {
+  let fee = flightSuretyApp.methods
+    .REGISTRATION_FEE().call();
 
-function getOracleIndexes() {
   oracles.forEach( oracle => {
-    console.log(oracle.address);
+    registerOracle(oracle);
+  }); 
 
-    flightSuretyApp.methods
-      .getMyIndexes()
-      .call({from: oracle.address}, (error, result) => {
-        if (error) {
-          console.log(error);
-        } else {
-          console.log(`oracle: ${oracle.address} / indices: ${result}`);
-          oracle["indices"] = result;
-        }
+};
+
+const registerOracle = async (oracle) => {
+  await flightSuretyApp.methods.registerOracle().send({
+    from: oracle.address,
+    value: web3.utils.toWei('1', 'ether'),
+    gas: 1000000,
+  }, async (err, result) => {
+
+      let indices = await flightSuretyApp.methods.getMyIndexes().call({
+        "from": oracle.address,
+        "gas": 100000,
       });
-    });
-  }
+
+      oracle.indices = indices;
+      console.log('Oracle account: ', oracle.address, 'indices: ', oracle.indices);
+  });
+};
 
 web3.eth.getAccounts((error, acct) => {
   accounts = acct;
@@ -71,7 +64,7 @@ web3.eth.getAccounts((error, acct) => {
   }
   
   registerOracles();
-  getOracleIndexes();
+  //getOracleIndexes();
 });
 
 function getRandomStatusCode() {
@@ -89,19 +82,19 @@ flightSuretyApp.events.OracleRequest({fromBlock: 'latest'},
 
     console.log(`>>>> index: ${index}, airline: ${airline}, flight: ${flight}, timestamp: ${timestamp},`);
 
-    // oracles.forEach( oracle => {
-    //   if (oracle.indices.includes(index)) {
-    //     flightSuretyApp.methods
-    //       .submitOracleResponse(index, airline, flight, timestamp, getRandomStatusCode())
-    //       .send({from: oracle.address}, (error, result) => {    
-    //         if (error) {
-    //           console.log(error);
-    //         } else {
-    //           console.log(result);
-    //         }
-    //     });
-    //   }
-    // });
+    oracles.forEach( oracle => {
+      if (oracle.indices.includes(index)) {
+        flightSuretyApp.methods
+          .submitOracleResponse(index, airline, flight, timestamp, getRandomStatusCode())
+          .send({from: oracle.address}, (error, result) => {    
+            if (error) {
+              console.log(`Error::submitOracleResponse - ${error}`);
+            } else {
+              console.log(`Result::submitOracleResponse - ${result}`);
+            }
+        });
+      }
+    });
 });
 
 // flightSuretyApp.events.allEvents({fromBlock: 'latest'}, 

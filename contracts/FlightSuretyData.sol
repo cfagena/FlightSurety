@@ -167,10 +167,10 @@ contract FlightSuretyData {
         return airlines[airline].isParticipant;
     }
 
-    function isInsurancePurchased(bytes32 key) external view
+    function isInsurancePurchased(string memory flightCode, address passenger) external view
     isCallerAuthorized 
     returns(bool success){
-        return insurances[key].exist;
+        return flights[flightCode].insurances[passenger].exist;
     }
 
     function getAmountRegisteredAirlines() external view
@@ -303,13 +303,13 @@ contract FlightSuretyData {
     requireIsOperational 
     isCallerAuthorized 
     returns(bool success) {
-        if (flights[flightCode].isRegistered == false) {
-            flights[flightCode] = Flight ({
-                        isRegistered: true,
-                        statusCode: STATUS_CODE_UNKNOWN,
-                        updatedTimestamp: block.timestamp,    
-                        airline: airlineAddress
-                    });
+        if (!flights[flightCode].isRegistered) {
+
+            Flight storage auxFlight = flights[flightCode];
+            auxFlight.isRegistered = true;
+            auxFlight.statusCode = STATUS_CODE_UNKNOWN;
+            auxFlight.updatedTimestamp = block.timestamp;
+            auxFlight.airline = airlineAddress;
 
             emit Log(flightCode);
 
@@ -322,17 +322,25 @@ contract FlightSuretyData {
     * @dev Buy insurance for a flight
     *
     */   
-    function buy (bytes32 key, uint256 amount) external payable
+    function buy (address passenger, string memory flightCode, uint256 amount) external payable
     requireIsOperational 
     isCallerAuthorized 
     returns(bool success) {
-        insurances[key] =  Insurance ({
-            amount: amount,
-            flightStatus: STATUS_CODE_UNKNOWN,
-            credited: false,
-            exist: true
-        });
-        return true;
+        if (flights[flightCode].isRegistered && !flights[flightCode].insurances[passenger].exist) {
+
+            Insurance storage insurance = flights[flightCode].insurances[passenger];
+            insurance.amount = amount;
+            insurance.settled = false;
+            insurance.exist = true;
+
+            //flights[flightCode].insurances[passenger].amount = amount;
+            //flights[flightCode].insurances[passenger].settled = false;
+            //flights[flightCode].insurances[passenger].exist = true;
+            
+            flights[flightCode].insurees.push(passenger);
+            return true;
+        }
+        return false;
     } 
     
     /**
@@ -340,27 +348,27 @@ contract FlightSuretyData {
     */
     function creditInsurees(address passenger, string memory flightCode) external 
     requireIsOperational {
-        bytes32 key = keccak256(abi.encodePacked(passenger, flightCode));
-        require(insurances[key].exist, "There is no insurance for this flight and passenger");
-        require(!insurances[key].credited, "Credit has already been given to passenger");
-        require(insurances[key].flightStatus == STATUS_CODE_LATE_AIRLINE, "Flight is not delayed or the delay reason is other than the Airline's fault");
+        require(flights[flightCode].insurances[passenger].exist, "There is no insurance for this flight and passenger");
+        require(flights[flightCode].insurances[passenger].settled, "Credit has already been given to passenger");
+        require(flights[flightCode].statusCode == STATUS_CODE_LATE_AIRLINE, "Flight is not delayed or the delay reason is other than the Airline's fault");
 
-        passengerBalance[passenger] += insurances[key].amount.mul(3).div(2);
-        insurances[key].credited = true;
-    }
-    
+        passengerBalance[passenger] += flights[flightCode].insurances[passenger].amount.mul(3).div(2);
+        flights[flightCode].insurances[passenger].settled = true;
+    }    
 
     /**
      *  @dev Transfers eligible payout funds to insuree
      *
     */
     function pay(address payable passenger) external 
-    requireIsOperational {
+    requireIsOperational 
+    returns(uint256 amount) {
         require(passengerBalance[passenger] > 0, "No balance to withdraw");
 
-        uint256 amount = passengerBalance[passenger];
+        uint256 balance = passengerBalance[passenger];
         passengerBalance[passenger] = 0;
-        passenger.transfer(amount);
+
+        return balance;
     }
 
     /**

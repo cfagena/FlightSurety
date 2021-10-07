@@ -222,12 +222,10 @@ contract FlightSuretyApp {
     requireIsOperational
     returns(bool success) {
         require((msg.value > 0) && (msg.value <= 1 ether), "Insurance value should be into the interval ]0,1]");
-        
-        bytes32 key = keccak256(abi.encodePacked(msg.sender, flightCode));
+        require(dataContract.isFlightRegistered(flightCode), "Flight is not registered");
+        require(!dataContract.isInsurancePurchased(flightCode, msg.sender), "Insurance already purchased for this flight and passenger");
 
-        require(!dataContract.isInsurancePurchased(key), "Insurance already purchased for this flight and passenger");
-
-        return dataContract.buy(key, msg.value);
+        return dataContract.buy(msg.sender, flightCode, msg.value);
     } 
 
    /**
@@ -239,10 +237,8 @@ contract FlightSuretyApp {
                                     string memory flight,
                                     uint256 timestamp,
                                     uint8 statusCode
-                                ) internal pure {
-
-                                    
-
+                                ) internal {
+        emit Log("ProcessFlightStatus");
     }
 
 
@@ -257,9 +253,9 @@ contract FlightSuretyApp {
         // Generate a unique key for storing the request
         bytes32 key = keccak256(abi.encodePacked(index, airline, flight, timestamp));
         
-        // ResponseInfo storage auxResponseInfo = oracleResponses[key];
-        // auxResponseInfo.requester = msg.sender;
-        // auxResponseInfo.isOpen = true;
+        ResponseInfo storage auxResponseInfo = oracleResponses[key];
+        auxResponseInfo.requester = msg.sender;
+        auxResponseInfo.isOpen = true;
 
         emit OracleRequest(index, airline, flight, timestamp);
     } 

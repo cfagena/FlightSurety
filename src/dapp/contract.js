@@ -138,19 +138,16 @@ export default class Contract {
         }
     }
 
-    buyInsurance(flightCode, passengerAddress, amount, callback) {
+    async buyInsurance(flightCode, passengerAddress, amount, callback) {
         let self = this;
         let ether = Web3Util.toWei(amount.toString(), "ether");
 
-        self.flightSuretyApp.methods
+        let result = await self.flightSuretyApp.methods
             .buy(flightCode)
-            .send({ from: passengerAddress, value: ether }, 
-                (error, result) => {
-                    if (error)
-                        callback(error);
-                    else 
-                        callback(result);
-                });
+            .call({ from: passengerAddress, value: ether, "gas": 4712388, "gasPrice": 100000000000});
+
+            console.log(`result: ${result}`);
+
     }
    
 }
