@@ -155,7 +155,7 @@ export default class Contract {
         let ether = Web3Util.toWei(amount.toString(), "ether");
 
         let result = await self.flightSuretyApp.methods
-            .pqp(flightCode)
+            .buy(flightCode)
             .call({ from: passengerAddress, value: ether, "gas": 4712388, "gasPrice": 100000000000});
 
             console.log(`buyInsurance: ${result}`);
@@ -171,6 +171,19 @@ export default class Contract {
         
         if (result) {
             console.log(`balance: ${result} ether`);
+            callback(result);
+        }
+    }
+
+    async getInsurance(callback) {
+        let self = this;
+
+        var result = await self.flightSuretyData.methods
+            .getInsurance("FA1111")
+            .call({ from: self.passenger, "gas": 4712388, "gasPrice": 100000000000});
+        
+        if (result) {
+            console.log(`insurance: ${result}`);
             callback(result);
         }
     }

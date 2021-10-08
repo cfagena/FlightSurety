@@ -10,7 +10,7 @@ contract FlightSuretyData {
 
     event AirlineParticipant(address account);
     event InsureeCredited(address passenger, string flightCode, uint256 amount);
-    event InsuranceBought(string flightCode, address passenger, uint256 amount, bool exist);
+    event InsuranceBought(bytes32 key, string flightCode, address passenger, uint256 amount);
 
     /********************************************************************************************/
     /*                                       DATA VARIABLES                                     */
@@ -47,7 +47,6 @@ contract FlightSuretyData {
         uint256 updatedTimestamp;        
         address airline;
         
-        mapping(address => Insurance) insurances;   // mapping passenger => Insurance
         address[] insurees;                         // array of insurees
     }
 
@@ -56,8 +55,8 @@ contract FlightSuretyData {
     mapping(string => Flight) private flights;
     mapping(address => Airline) airlines; 
     mapping(address => uint256) private passengerBalance;
+    mapping(bytes32 => Insurance) private insurances;               // Maps the tuple (flight, passenger) to Insurance
     
-
     /********************************************************************************************/
     /*                                       EVENT DEFINITIONS                                  */
     /********************************************************************************************/
@@ -172,7 +171,8 @@ contract FlightSuretyData {
     function isInsurancePurchased(string memory flightCode, address passenger) external view
     isCallerAuthorized 
     returns(bool success){
-        return flights[flightCode].insurances[passenger].exist;
+        bytes32 key = keccak256(abi.encodePacked(passenger, flightCode));
+        return insurances[key].exist;
     }
 
     function getAmountRegisteredAirlines() external view
@@ -217,6 +217,14 @@ contract FlightSuretyData {
         }
         
         return "Unknown";
+    }
+
+    function getInsurance(string memory flightCode) external view 
+    returns(bytes32 _key, bool settled, bool exist, uint256 amount) {
+
+        bytes32 key = keccak256(abi.encodePacked(msg.sender, flightCode));
+
+        return (key, insurances[key].settled, insurances[key].exist, insurances[key].amount);
     }
     
     /********************************************************************************************/
@@ -359,19 +367,23 @@ contract FlightSuretyData {
     requireIsOperational 
     isCallerAuthorized 
     returns(bool success) {
-        if (flights[flightCode].isRegistered && !flights[flightCode].insurances[passenger].exist) {
+        bytes32 key = keccak256(abi.encodePacked(passenger, flightCode));
+        
+        if (flights[flightCode].isRegistered && !insurances[key].exist) {
 
-            Insurance storage insurance = flights[flightCode].insurances[passenger];
-            insurance.amount = amount;
-            insurance.settled = false;
-            insurance.exist = true;
-            
             flights[flightCode].insurees.push(passenger);
 
-            emit InsuranceBought(flightCode, passenger, flights[flightCode].insurances[passenger].amount, flights[flightCode].insurances[passenger].exist);
+            insurances[key] = Insurance({
+                amount: amount, 
+                settled: false,
+                exist: true
+            });
+            
+            emit InsuranceBought(key, flightCode, passenger, insurances[key].amount);
 
             return true;
         }
+
         return false;
     } 
     
@@ -379,15 +391,17 @@ contract FlightSuretyData {
      *  @dev Credits payouts to insurees
     */
     function creditInsuree(address passenger, string memory flightCode) internal 
-    requireIsOperational
-    isCallerAuthorized {
-        require(flights[flightCode].insurances[passenger].exist, "There is no insurance for this flight and passenger");
-        require(!flights[flightCode].insurances[passenger].settled, "Credit has already been given to the passenger");
+    requireIsOperational {
 
-        uint256 amount = flights[flightCode].insurances[passenger].amount.mul(3).div(2);
+        bytes32 key = keccak256(abi.encodePacked(passenger, flightCode));
+
+        require(insurances[key].exist, "There is no insurance for this flight and passenger");
+        require(!insurances[key].settled, "Credit has already been given to the passenger");
+
+        uint256 amount = insurances[key].amount.mul(3).div(2);
 
         passengerBalance[passenger] += amount;
-        flights[flightCode].insurances[passenger].settled = true;
+        insurances[key].settled = true;
 
         emit InsureeCredited(passenger, flightCode, amount);
     } 

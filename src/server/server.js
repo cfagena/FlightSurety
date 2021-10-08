@@ -98,13 +98,13 @@ flightSuretyApp.events.OracleRequest({fromBlock: 'latest'},
 flightSuretyApp.events.allEvents({fromBlock: 'latest'}, 
   function (error, event) {
     if (error) console.log(`Error: ${error}`);
-    else console.log(`Event: ${event.returnValues}`);
+    else console.log(event);
   });
 
 flightSuretyData.events.allEvents({fromBlock: 'latest'}, 
   function (error, event) {
     if (error) console.log(`Error: ${error}`);
-    else console.log(`Event: ${event.returnValues}`);
+    else console.log(event);
   });
 
 const app = express();
