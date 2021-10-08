@@ -9,6 +9,8 @@ contract FlightSuretyData {
     event Log(string);
 
     event AirlineParticipant(address account);
+    event InsureeCredited(address passenger, string flightCode, uint256 amount);
+    event InsuranceBought(string flightCode, address passenger, uint256 amount, bool exist);
 
     /********************************************************************************************/
     /*                                       DATA VARIABLES                                     */
@@ -23,7 +25,7 @@ contract FlightSuretyData {
 
     address private contractOwner;                                      // Account used to deploy contract
     bool private operational = true;                                    // Blocks all state changes throughout the contract if false
-    mapping(address => uint256) authorizedContracts;
+    mapping(address => uint256) private authorizedContracts;
 
     struct Insurance {
         uint256 amount;
@@ -198,6 +200,12 @@ contract FlightSuretyData {
         return flights[flightCode].isRegistered;
     }
 
+    function getFlightStatus(string memory flightCode) external view
+    isCallerAuthorized 
+    returns(uint8 statusCode){
+        return flights[flightCode].statusCode;
+    }
+
     function getAirlineStatus(address airline) public payable 
     requireIsOperational 
     returns(string memory status) {
@@ -318,11 +326,36 @@ contract FlightSuretyData {
         return false;       
     }
 
+    /**
+    * @dev Update flight status
+    *
+    */ 
+    function updateFlightStatus(string memory flightCode, uint8 statusCode) external
+    requireIsOperational 
+    isCallerAuthorized 
+    returns(bool success) {
+
+        if (flights[flightCode].isRegistered && flights[flightCode].statusCode == STATUS_CODE_UNKNOWN) {
+            flights[flightCode].statusCode = statusCode;
+
+            if (statusCode == STATUS_CODE_LATE_AIRLINE) {
+                uint256 numInsurees = flights[flightCode].insurees.length;
+
+                for (uint8 i = 0; i < numInsurees; i++){
+                    creditInsuree(flights[flightCode].insurees[i], flightCode);
+                }
+            }
+            return true;
+        }
+
+        return false;       
+    }
+
    /**
     * @dev Buy insurance for a flight
     *
     */   
-    function buy (address passenger, string memory flightCode, uint256 amount) external payable
+    function buy(address passenger, string memory flightCode, uint256 amount) external payable
     requireIsOperational 
     isCallerAuthorized 
     returns(bool success) {
@@ -332,12 +365,11 @@ contract FlightSuretyData {
             insurance.amount = amount;
             insurance.settled = false;
             insurance.exist = true;
-
-            //flights[flightCode].insurances[passenger].amount = amount;
-            //flights[flightCode].insurances[passenger].settled = false;
-            //flights[flightCode].insurances[passenger].exist = true;
             
             flights[flightCode].insurees.push(passenger);
+
+            emit InsuranceBought(flightCode, passenger, flights[flightCode].insurances[passenger].amount, flights[flightCode].insurances[passenger].exist);
+
             return true;
         }
         return false;
@@ -346,22 +378,37 @@ contract FlightSuretyData {
     /**
      *  @dev Credits payouts to insurees
     */
-    function creditInsurees(address passenger, string memory flightCode) external 
-    requireIsOperational {
+    function creditInsuree(address passenger, string memory flightCode) internal 
+    requireIsOperational
+    isCallerAuthorized {
         require(flights[flightCode].insurances[passenger].exist, "There is no insurance for this flight and passenger");
-        require(flights[flightCode].insurances[passenger].settled, "Credit has already been given to passenger");
-        require(flights[flightCode].statusCode == STATUS_CODE_LATE_AIRLINE, "Flight is not delayed or the delay reason is other than the Airline's fault");
+        require(!flights[flightCode].insurances[passenger].settled, "Credit has already been given to the passenger");
 
-        passengerBalance[passenger] += flights[flightCode].insurances[passenger].amount.mul(3).div(2);
+        uint256 amount = flights[flightCode].insurances[passenger].amount.mul(3).div(2);
+
+        passengerBalance[passenger] += amount;
         flights[flightCode].insurances[passenger].settled = true;
+
+        emit InsureeCredited(passenger, flightCode, amount);
+    } 
+
+    /**
+    * @dev Get flight status
+    *
+    */   
+    function getPassengerBalance(address passenger) external view 
+    isCallerAuthorized
+    returns(uint256 balance){
+        return passengerBalance[passenger];
     }    
 
     /**
      *  @dev Transfers eligible payout funds to insuree
      *
     */
-    function pay(address payable passenger) external 
+    function pay(address passenger) external 
     requireIsOperational 
+    isCallerAuthorized 
     returns(uint256 amount) {
         require(passengerBalance[passenger] > 0, "No balance to withdraw");
 
@@ -370,18 +417,6 @@ contract FlightSuretyData {
 
         return balance;
     }
-
-    /**
-    * @dev Fallback function for funding smart contract.
-    *
-    */
-    // function() 
-    //                         external 
-    //                         payable 
-    // {
-    //     fund();
-    // }
-
 
 }
 

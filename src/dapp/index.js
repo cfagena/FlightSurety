@@ -7,7 +7,7 @@ import './flightsurety.css';
 (async() => {
     let contract = new Contract('localhost', () => {
 
-        DOM.elid('passenger-id').textContent = contract.passenger;
+              
 
         contract.flightSuretyApp.events.allEvents({fromBlock: 'latest'}, 
         function (error, event) {
@@ -57,14 +57,6 @@ import './flightsurety.css';
                 isOperational();
             });
         });
-    
-        // User-submitted transaction
-        // DOM.elid('submit-oracle').addEventListener('click', () => {
-        //     let flight = DOM.elid('flight-number').value;
-        //     contract.fetchFlightStatus(flight, (error, result) => {
-        //         display('Oracles', 'Trigger oracles', [ { label: 'Fetch Flight Status', error: error, value: result.flight + ' ' + result.timestamp} ]);
-        //     });
-        // })
 
         DOM.elid('register-flight-1').addEventListener('click', () => {
             contract.registerFlight('FA1111', contract.airlines[0], (error) => {
@@ -133,14 +125,45 @@ import './flightsurety.css';
             });
         }) 
 
-        DOM.elid('submit-to-oracles').addEventListener('click', () => {
-            let flightCode = DOM.elid('flight-select').value;
-            contract.fetchFlightStatus(flightCode, contract.airlines[1], contract.passenger, (error, response) => {
+        DOM.elid('submit-to-oracles-1').addEventListener('click', () => {
+            contract.fetchFlightStatus("FA1111", contract.airlines[0], contract.passenger, (error, response) => {
+                console.log(response);
+            });
+        }) 
+
+        DOM.elid('submit-to-oracles-2').addEventListener('click', () => {
+            contract.fetchFlightStatus("LT0001", contract.airlines[1], contract.passenger, (error, response) => {
+                console.log(response);
+            });
+        }) 
+
+        DOM.elid('check-flight-status-1').addEventListener('click', () => {
+            contract.getFlightStatus("FA1111", (response) => {
+                DOM.elid('flight-status-1').textContent = response;
+            });
+        }) 
+
+        DOM.elid('check-flight-status-2').addEventListener('click', () => {
+            contract.getFlightStatus("LT0001", (response) => {
+                DOM.elid('flight-status-2').textContent = response;
+            });
+        }) 
+
+        DOM.elid('check-balance').addEventListener('click', () => {
+            contract.getPassengerBalance((response) => {
+                DOM.elid('passenger-balance').textContent = `${response} ether`;
+            });
+        }) 
+
+        DOM.elid('withdraw').addEventListener('click', () => {
+            contract.withdraw((response) => {
                 console.log(response);
             });
         }) 
  
         isOperational();
+        DOM.elid('passenger-id').textContent = contract.passenger;
+        DOM.elid('passenger-address').textContent = contract.passenger;  
         
     });
     

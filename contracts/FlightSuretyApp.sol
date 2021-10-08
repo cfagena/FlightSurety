@@ -37,8 +37,8 @@ contract FlightSuretyApp {
     event AirlineParticipant(address account);
     event AirlineVoted(address airline);
     event FlightRegistered(string flightCode);
-
     event OracleRegistered(address account);
+    event AccountWithdraw(address passenger, uint256 balance);
 
     event Log(string);
  
@@ -224,30 +224,59 @@ contract FlightSuretyApp {
         require((msg.value > 0) && (msg.value <= 1 ether), "Insurance value should be into the interval ]0,1]");
         require(dataContract.isFlightRegistered(flightCode), "Flight is not registered");
         require(!dataContract.isInsurancePurchased(flightCode, msg.sender), "Insurance already purchased for this flight and passenger");
-
+    
         return dataContract.buy(msg.sender, flightCode, msg.value);
+    } 
+
+    /**
+    * @dev Get flight status
+    *
+    */   
+    function getFlightStatus(string memory flightCode) external view returns(uint8 statusCode){
+        return dataContract.getFlightStatus(flightCode);
+    } 
+
+    
+    /**
+    * @dev Get passanger balance
+    *
+    */   
+    function getPassengerBalance() external view returns(uint256 balance){
+        return dataContract.getPassengerBalance(msg.sender);
+    } 
+
+    /**
+    * @dev Get flight status
+    *
+    */   
+    function withdraw() external payable 
+    requireIsOperational
+    returns(bool success){
+        uint256 balance = dataContract.pay(msg.sender);
+
+        payable(msg.sender).transfer(balance);
+        emit AccountWithdraw(msg.sender, balance);
+        return true;
     } 
 
    /**
     * @dev Called after oracle has updated flight status
-    *
+    * Assumptions made: 
+    * 1. Only if the status is UNKNOWN it can be updated, otherwise it will be consider as final state
+    * 2. The first time the status reaches a final state then it becomes immutable - following calls to this method will be ignored
     */  
-    function processFlightStatus (
-                                    address airline,
-                                    string memory flight,
-                                    uint256 timestamp,
-                                    uint8 statusCode
-                                ) internal {
-        emit Log("ProcessFlightStatus");
+    function processFlightStatus (address airline, string memory flightCode, uint256 timestamp, uint8 statusCode) internal {
+        require(dataContract.getFlightStatus(flightCode) == STATUS_CODE_UNKNOWN, "Flight already processed");
+
+        dataContract.updateFlightStatus(flightCode, statusCode);
+
+        emit ProcessFlightStatus(airline, flightCode, timestamp, statusCode);
     }
 
 
     // Generate a request for oracles to fetch flight information
-    function fetchFlightStatus (
-                                    address airline,
-                                    string memory flight,
-                                    uint256 timestamp                            
-                                ) requireIsOperational external {
+    function fetchFlightStatus (address airline, string memory flight, uint256 timestamp) 
+        requireIsOperational external {
         uint8 index = getRandomIndex(msg.sender);
 
         // Generate a unique key for storing the request
@@ -296,6 +325,8 @@ contract FlightSuretyApp {
 
     // Event fired each time an oracle submits a response
     event FlightStatusInfo(address airline, string flight, uint256 timestamp, uint8 status);
+    
+    event ProcessFlightStatus(address airline, string flight, uint256 timestamp, uint8 status);
 
     event OracleReport(address airline, string flight, uint256 timestamp, uint8 status);
 

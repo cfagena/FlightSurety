@@ -70,22 +70,29 @@
                 <th>Airline</th>
                 <th>Flight Code</th>
                 <th>Departure</th>
-                <th>Register</th>
+                <th>Contract Status</th>
+                <th>Action</th>
               </tr>
               <tr>
                 <td>First Airline</td>
                 <td>FA1111</td>
                 <td>23:30 PM</td>
+                <td id="flight-status-1"></td>
                 <td>
                     <btn class="btn btn-primary" id="register-flight-1">Register</btn>
+                    <btn class="btn btn-primary" id="check-flight-status-1">Contract Status</btn>
+                    <btn class="btn btn-primary" id="submit-to-oracles-1">Submit Oracles</btn>
                 </td>
               </tr>
               <tr>
                 <td>LATAM</td>
                 <td>LT0001</td>
                 <td>23:59 PM</td>
+                <td id="flight-status-2"></td>
                 <td>
                   <btn class="btn btn-primary" id="register-flight-2">Register</btn>
+                  <btn class="btn btn-primary" id="check-flight-status-2">Contract Status</btn>
+                  <btn class="btn btn-primary" id="submit-to-oracles-2">Submit Oracles</btn>
                 </td>
               </tr>
             </table>
@@ -120,7 +127,25 @@
                 </td>
                 <td>
                     <btn class="btn btn-primary" id="buy-insurance">Buy</btn>
-                    <btn class="btn btn-primary" id="submit-to-oracles">Submit Oracles</btn>
+                </td>
+              </tr>
+            </table>
+          </div>
+
+          <div>
+            <h3>Passenger/Withdraw</h3>
+            <table class="table">
+              <tr>
+                <th>Passenger</th>
+                <th>Balance</th>
+                <th>Actions</th>
+              </tr>
+              <tr>
+                <td id="passenger-address"></td>
+                <td id="passenger-balance"></td>
+                <td>
+                    <btn class="btn btn-primary" id="check-balance">Balance</btn>
+                    <btn class="btn btn-primary" id="withdraw">Withdraw</btn>
                 </td>
               </tr>
             </table>

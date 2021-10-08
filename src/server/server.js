@@ -39,16 +39,15 @@ const registerOracle = async (oracle) => {
   await flightSuretyApp.methods.registerOracle().send({
     from: oracle.address,
     value: web3.utils.toWei('1', 'ether'),
-    gas: 1000000,
+    gas: 4712388,
   }, async (err, result) => {
 
-      let indices = await flightSuretyApp.methods.getMyIndexes().call({
-        "from": oracle.address,
-        "gas": 100000,
-      });
+      let indices = await flightSuretyApp.methods
+      .getMyIndexes()
+      .call({"from": oracle.address, "gas": 4712388});
 
       oracle.indices = indices;
-      console.log('Oracle account: ', oracle.address, 'indices: ', oracle.indices);
+      console.log('Oracle address:', oracle.address, 'indices:', oracle.indices);
   });
 };
 
@@ -64,7 +63,6 @@ web3.eth.getAccounts((error, acct) => {
   }
   
   registerOracles();
-  //getOracleIndexes();
 });
 
 function getRandomStatusCode() {
@@ -85,8 +83,8 @@ flightSuretyApp.events.OracleRequest({fromBlock: 'latest'},
     oracles.forEach( oracle => {
       if (oracle.indices.includes(index)) {
         flightSuretyApp.methods
-          .submitOracleResponse(index, airline, flight, timestamp, getRandomStatusCode())
-          .send({from: oracle.address}, (error, result) => {    
+          .submitOracleResponse(index, airline, flight, timestamp, /*getRandomStatusCode()*/ 20)
+          .send({from: oracle.address, "gas": 4712388}, (error, result) => {    
             if (error) {
               console.log(`Error::submitOracleResponse - ${error}`);
             } else {
@@ -97,17 +95,17 @@ flightSuretyApp.events.OracleRequest({fromBlock: 'latest'},
     });
 });
 
-// flightSuretyApp.events.allEvents({fromBlock: 'latest'}, 
-//   function (error, event) {
-//     if (error) console.log(error);
-//     else console.log(event);
-//   });
+flightSuretyApp.events.allEvents({fromBlock: 'latest'}, 
+  function (error, event) {
+    if (error) console.log(`Error: ${error}`);
+    else console.log(`Event: ${event.returnValues}`);
+  });
 
-// flightSuretyData.events.allEvents({fromBlock: 'latest'}, 
-//   function (error, event) {
-//     if (error) console.log(error);
-//     else console.log(event);
-//   });
+flightSuretyData.events.allEvents({fromBlock: 'latest'}, 
+  function (error, event) {
+    if (error) console.log(`Error: ${error}`);
+    else console.log(`Event: ${event.returnValues}`);
+  });
 
 const app = express();
 app.get('/api', (req, res) => {

@@ -83,7 +83,7 @@ export default class Contract {
         } 
         self.flightSuretyApp.methods
             .fetchFlightStatus(payload.airline, payload.flight, payload.timestamp)
-            .send({ from: passenger}, (error, result) => {
+            .send({ from: passenger, "gas": 4712388, "gasPrice": 100000000000}, (error, result) => {
                 callback(error, payload);
             });
     }
@@ -138,16 +138,41 @@ export default class Contract {
         }
     }
 
+    async getFlightStatus(flightCode, callback) {
+        let self = this;
+
+        var status = await self.flightSuretyApp.methods
+            .getFlightStatus(flightCode)
+            .call();
+        
+        if (status) {
+            callback(status);
+        }
+    }
+
     async buyInsurance(flightCode, passengerAddress, amount, callback) {
         let self = this;
         let ether = Web3Util.toWei(amount.toString(), "ether");
 
         let result = await self.flightSuretyApp.methods
-            .buy(flightCode)
+            .pqp(flightCode)
             .call({ from: passengerAddress, value: ether, "gas": 4712388, "gasPrice": 100000000000});
 
-            console.log(`result: ${result}`);
+            console.log(`buyInsurance: ${result}`);
 
+    }
+    
+    async getPassengerBalance(callback) {
+        let self = this;
+
+        var result = await self.flightSuretyApp.methods
+            .getPassengerBalance()
+            .call({ from: self.passenger, "gas": 4712388, "gasPrice": 100000000000});
+        
+        if (result) {
+            console.log(`balance: ${result} ether`);
+            callback(result);
+        }
     }
    
 }
