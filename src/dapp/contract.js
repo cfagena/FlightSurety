@@ -156,9 +156,9 @@ export default class Contract {
 
         let result = await self.flightSuretyApp.methods
             .buy(flightCode)
-            .call({ from: passengerAddress, value: ether, "gas": 4712388, "gasPrice": 100000000000});
+            .send({ from: passengerAddress, value: ether, "gas": 4712388, "gasPrice": 100000000000});
 
-            console.log(`buyInsurance: ${result}`);
+            console.log(result);
 
     }
     
@@ -170,8 +170,9 @@ export default class Contract {
             .call({ from: self.passenger, "gas": 4712388, "gasPrice": 100000000000});
         
         if (result) {
-            console.log(`balance: ${result} ether`);
-            callback(result);
+            let premium = Web3Util.fromWei(result.toString(), "ether");
+            console.log(`balance: ${premium} ether`);
+            callback(`${premium}`);
         }
     }
 
@@ -183,9 +184,23 @@ export default class Contract {
             .call({ from: self.passenger, "gas": 4712388, "gasPrice": 100000000000});
         
         if (result) {
-            console.log(`insurance: ${result}`);
+            console.log(result);
             callback(result);
         }
+    }
+
+    async withdraw(callback) {
+        let self = this;
+
+        self.flightSuretyApp.methods
+            .withdraw()
+            .send({ from: self.passenger, "gas": 4712388, "gasPrice": 100000000000 }, 
+                (error, result) => {
+                    if (error)
+                        callback(error);
+                    else 
+                        callback(result);
+                });
     }
    
 }

@@ -156,7 +156,7 @@ import './flightsurety.css';
         }) 
 
         DOM.elid('withdraw').addEventListener('click', () => {
-            contract.getInsurance((response) => {
+            contract.withdraw((response) => {
                 console.log(response);
             });
         }) 

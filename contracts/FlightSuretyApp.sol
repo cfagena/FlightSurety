@@ -220,7 +220,7 @@ contract FlightSuretyApp {
     */   
     function buy(string memory flightCode) external payable 
     requireIsOperational
-    returns(bool success) {
+    returns(bool success, bytes32 _key) {
         require((msg.value > 0) && (msg.value <= 1 ether), "Insurance value should be into the interval ]0,1]");
         require(dataContract.isFlightRegistered(flightCode), "Flight is not registered");
         require(!dataContract.isInsurancePurchased(flightCode, msg.sender), "Insurance already purchased for this flight and passenger");

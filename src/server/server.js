@@ -81,6 +81,7 @@ flightSuretyApp.events.OracleRequest({fromBlock: 'latest'},
     console.log(`>>>> index: ${index}, airline: ${airline}, flight: ${flight}, timestamp: ${timestamp},`);
 
     oracles.forEach( oracle => {
+      console.log(`>>>> index: ${oracle.indices}`);
       if (oracle.indices.includes(index)) {
         flightSuretyApp.methods
           .submitOracleResponse(index, airline, flight, timestamp, /*getRandomStatusCode()*/ 20)
@@ -95,17 +96,17 @@ flightSuretyApp.events.OracleRequest({fromBlock: 'latest'},
     });
 });
 
-flightSuretyApp.events.allEvents({fromBlock: 'latest'}, 
-  function (error, event) {
-    if (error) console.log(`Error: ${error}`);
-    else console.log(event);
-  });
+// flightSuretyApp.events.allEvents({fromBlock: 'latest'}, 
+//   function (error, event) {
+//     if (error) console.log(`Error: ${error}`);
+//     else console.log(event);
+//   });
 
-flightSuretyData.events.allEvents({fromBlock: 'latest'}, 
-  function (error, event) {
-    if (error) console.log(`Error: ${error}`);
-    else console.log(event);
-  });
+// flightSuretyData.events.allEvents({fromBlock: 'latest'}, 
+//   function (error, event) {
+//     if (error) console.log(`Error: ${error}`);
+//     else console.log(event);
+//   });
 
 const app = express();
 app.get('/api', (req, res) => {

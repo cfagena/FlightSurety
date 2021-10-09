@@ -10,7 +10,7 @@ contract FlightSuretyData {
 
     event AirlineParticipant(address account);
     event InsureeCredited(address passenger, string flightCode, uint256 amount);
-    event InsuranceBought(bytes32 key, string flightCode, address passenger, uint256 amount);
+    event InsuranceBought(string flightCode, address passenger, uint256 amount);
 
     /********************************************************************************************/
     /*                                       DATA VARIABLES                                     */
@@ -220,11 +220,11 @@ contract FlightSuretyData {
     }
 
     function getInsurance(string memory flightCode) external view 
-    returns(bytes32 _key, bool settled, bool exist, uint256 amount) {
+    returns(uint num, bytes32 _key, bool settled, bool exist, uint256 amount) {
 
         bytes32 key = keccak256(abi.encodePacked(msg.sender, flightCode));
 
-        return (key, insurances[key].settled, insurances[key].exist, insurances[key].amount);
+        return (flights[flightCode].insurees.length, key, insurances[key].settled, insurances[key].exist, insurances[key].amount);
     }
     
     /********************************************************************************************/
@@ -363,11 +363,11 @@ contract FlightSuretyData {
     * @dev Buy insurance for a flight
     *
     */   
-    function buy(address passenger, string memory flightCode, uint256 amount) external payable
+    function buy(address passenger, string memory flightCode, uint256 amount) external
     requireIsOperational 
     isCallerAuthorized 
-    returns(bool success) {
-        bytes32 key = keccak256(abi.encodePacked(passenger, flightCode));
+    returns(bool success, bytes32 _key) {
+        bytes32 key = keccak256(abi.encodePacked(passenger, flightCode));     
         
         if (flights[flightCode].isRegistered && !insurances[key].exist) {
 
@@ -379,12 +379,12 @@ contract FlightSuretyData {
                 exist: true
             });
             
-            emit InsuranceBought(key, flightCode, passenger, insurances[key].amount);
+            emit InsuranceBought(flightCode, passenger, insurances[key].amount);
 
-            return true;
+            return (false, key);
         }
 
-        return false;
+        return (false, key);
     } 
     
     /**
