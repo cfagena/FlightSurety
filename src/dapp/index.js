@@ -6,31 +6,17 @@ import './flightsurety.css';
 
 (async() => {
     let contract = new Contract('localhost', () => {
-
-              
-
-        contract.flightSuretyApp.events.allEvents({fromBlock: 'latest'}, 
-        function (error, event) {
-            if (error) console.log(error);
-            else console.log(event);
-        });
-
-        contract.flightSuretyData.events.allEvents({fromBlock: 'latest'}, 
-        function (error, event) {
-            if (error) console.log(error);
-            else console.log(event);
-        });
-
-        
+                  
         // Read transaction
         function isOperational() {
             contract.isOperational((error, result) => {
-                //console.log(error,result);
-    
                 let displayDiv = DOM.elid("op-status");
                 let button = DOM.elid("toggle-operational");
-    
-                if (result) {
+
+                if (error) {
+                    displayDiv.textContent = "Offline";
+                    button.textContent = "Try Again";
+                } else if (result) {
                     displayDiv.textContent = "Up & Running";
                     button.textContent = "Pause";
     

@@ -139,13 +139,11 @@ contract FlightSuretyData {
         delete authorizedContracts[contractAddress];
     }
 
-    function isContractAuthorized(address contractAddress) external 
+    function isContractAuthorized(address contractAddress) external view
     returns(bool success){
         if (authorizedContracts[contractAddress] == 1) {
-            emit Log("Contract authorized");
             return true;
         } else {
-            emit Log("Contract NOT authorized");
             return false;
         }
     }
@@ -326,8 +324,6 @@ contract FlightSuretyData {
             auxFlight.statusCode = STATUS_CODE_UNKNOWN;
             auxFlight.updatedTimestamp = block.timestamp;
             auxFlight.airline = airlineAddress;
-
-            emit Log(flightCode);
 
             return true;
         }

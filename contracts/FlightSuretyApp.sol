@@ -209,9 +209,7 @@ contract FlightSuretyApp {
 
         if (dataContract.registerFlight(flightCode, msg.sender) == true) {
             emit FlightRegistered(flightCode);
-            return;
         }
-        emit Log("Failed to Register flight");
     }
 
     /**

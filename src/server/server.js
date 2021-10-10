@@ -10,7 +10,7 @@ let web3 = new Web3(new Web3.providers.WebsocketProvider(config.url.replace('htt
 web3.eth.defaultAccount = web3.eth.accounts[0];
 
 let flightSuretyApp = new web3.eth.Contract(FlightSuretyApp.abi, config.appAddress);
-let flightSuretyData = new web3.eth.Contract(FlightSuretyData.abi, config.dataAddress);
+// let flightSuretyData = new web3.eth.Contract(FlightSuretyData.abi, config.dataAddress);
 
 // uint8 private constant STATUS_CODE_UNKNOWN = 0;
 // uint8 private constant STATUS_CODE_ON_TIME = 10;
@@ -26,9 +26,6 @@ let accounts = [];
 let owner = null;
 
 const registerOracles = async () => {
-  let fee = flightSuretyApp.methods
-    .REGISTRATION_FEE().call();
-
   oracles.forEach( oracle => {
     registerOracle(oracle);
   }); 
@@ -38,7 +35,7 @@ const registerOracles = async () => {
 const registerOracle = async (oracle) => {
   await flightSuretyApp.methods.registerOracle().send({
     from: oracle.address,
-    value: web3.utils.toWei('1', 'ether'),
+    value: web3.utils.toWei("1", 'ether'),
     gas: 4712388,
   }, async (err, result) => {
 
@@ -84,7 +81,7 @@ flightSuretyApp.events.OracleRequest({fromBlock: 'latest'},
       console.log(`>>>> index: ${oracle.indices}`);
       if (oracle.indices.includes(index)) {
         flightSuretyApp.methods
-          .submitOracleResponse(index, airline, flight, timestamp, /*getRandomStatusCode()*/ 20)
+          .submitOracleResponse(index, airline, flight, timestamp, getRandomStatusCode())
           .send({from: oracle.address, "gas": 4712388}, (error, result) => {    
             if (error) {
               console.log(`Error::submitOracleResponse - ${error}`);
