@@ -214,7 +214,7 @@ contract FlightSuretyData {
             return "Registered";
         }
         
-        return "Unknown";
+        return "Candidate";
     }
 
     function getInsurance(string memory flightCode) external view 

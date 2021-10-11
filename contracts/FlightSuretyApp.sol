@@ -26,6 +26,8 @@ contract FlightSuretyApp {
     uint8 private constant STATUS_CODE_LATE_TECHNICAL = 40;
     uint8 private constant STATUS_CODE_LATE_OTHER = 50;
 
+    uint256 public constant AIRLINE_REGISTRATION_FEE = 10 ether;
+
     address private contractOwner;          // Account used to deploy contract
     FlightSuretyData dataContract;
 
@@ -40,7 +42,7 @@ contract FlightSuretyApp {
     event OracleRegistered(address account);
     event AccountWithdraw(address passenger, uint256 balance);
 
-    event Log(string);
+    event Log(string first, string second);
  
     /********************************************************************************************/
     /*                                       FUNCTION MODIFIERS                                 */
@@ -82,9 +84,9 @@ contract FlightSuretyApp {
     /**
     * @dev Modifier that requires a registered airline to be the function caller
     */
-    modifier requireParticipantAirline(address airline)
+    modifier requireParticipantAirline()
     {
-        require(dataContract.isParticipantAirline(airline), "Airline is not participant");
+        require(dataContract.isParticipantAirline(msg.sender), "Airline is not participant");
         _;
     }
 
@@ -117,6 +119,28 @@ contract FlightSuretyApp {
     */    
     function setOperatingStatus(bool mode) external requireContractOwner {
         operationalFlag = mode;      
+    }
+
+    function uint2str(uint _i) internal pure returns (string memory _uintAsString) {
+        if (_i == 0) {
+            return "0";
+        }
+        uint j = _i;
+        uint len;
+        while (j != 0) {
+            len++;
+            j /= 10;
+        }
+        bytes memory bstr = new bytes(len);
+        uint k = len;
+        while (_i != 0) {
+            k = k-1;
+            uint8 temp = (48 + uint8(_i - _i / 10 * 10));
+            bytes1 b1 = bytes1(temp);
+            bstr[k] = b1;
+            _i /= 10;
+        }
+        return string(bstr);
     }
 
     /********************************************************************************************/
@@ -162,15 +186,18 @@ contract FlightSuretyApp {
         require(!dataContract.isRegisteredAirline(airline), "Airline is already registered");
         require(!dataContract.callerVotedToAirline(msg.sender, airline), "Caller already voted for this Airline");
 
+        dataContract.addVote(airline, msg.sender);
+
         uint256 votes = dataContract.getCandidateNumVotes(airline);
+        emit Log("Votes", uint2str(votes));
         uint256 amountRegisteredAirlines = dataContract.getAmountRegisteredAirlines();
+        emit Log("amountRegisteredAirlines", uint2str(amountRegisteredAirlines));
 
         if (votes >= amountRegisteredAirlines/2) {
-            dataContract.addVote(airline, msg.sender);
+            dataContract.updateAirlineStatus(airline, true, false);
             emit AirlineRegistered(airline);
             return true;
         } else {
-            dataContract.updateAirlineStatus(airline, true, false);
             emit AirlineVoted(airline);
             return true;
         }
@@ -187,13 +214,9 @@ contract FlightSuretyApp {
         emit AirlineParticipant(msg.sender);        
     }
 
-    function getAirlineStatus(address airline) public payable 
+    function getAirlineStatus(address airline) public  
     requireIsOperational 
     returns(string memory status) {
-
-        require(airline != address(0), "airline is not a valid address.");
-        require(dataContract.isRegisteredAirline(airline), "Airline is not registered");
-
         return dataContract.getAirlineStatus(airline);
     }
 
@@ -203,7 +226,7 @@ contract FlightSuretyApp {
     */  
     function registerFlight (string memory flightCode) external
     requireIsOperational
-    requireRegisteredAirline {
+    requireParticipantAirline {
 
         require(!dataContract.isFlightRegistered(flightCode), "Flight code is already registered");
 
